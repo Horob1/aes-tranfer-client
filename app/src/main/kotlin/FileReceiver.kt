@@ -18,15 +18,15 @@ class FileReceiver(private val socket: Socket, private val username: String) {
             try {
                 while (totalRead < fileSize) {
                     bytesRead = inputStream.read(buffer)
-                    if (bytesRead == -1) throw IOException("Mất kết nối khi nhận file!") // Nếu mất kết nối, báo lỗi ngay
+                    if (bytesRead == -1) throw IOException("Lost connection while receiving file!") // Nếu mất kết nối, báo lỗi ngay
 
                     fos.write(buffer, 0, bytesRead)
                     totalRead += bytesRead
                 }
 
-                println("✅ File nhận thành công: ${file.absolutePath}")
+                println("✅ File received successfully.: ${file.absolutePath}")
             } catch (e: IOException) {
-                println("❌ Lỗi nhận file: ${e.message}")
+                println("❌ Error receiving file: ${e.message}")
                 file.delete() // Nếu lỗi xảy ra, xóa file để tránh file bị hỏng
             }
         }

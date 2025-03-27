@@ -22,13 +22,13 @@ class DecryptFileScene(
 
     private var selectedFile: File? = null
 
-    private val fileLabel = TextField("Chưa chọn file").apply {
+    private val fileLabel = TextField("No file selected.").apply {
         isEditable = false
         maxWidth = fieldWidth
     }
 
     private val keyField = TextField().apply {
-        promptText = "Nhập key"
+        promptText = "Enter key"
         maxWidth = fieldWidth
     }
 
@@ -39,7 +39,7 @@ class DecryptFileScene(
     }
 
     fun createScene(): Scene {
-        val backButton = Button("⬅ Quay lại").apply {
+        val backButton = Button("⬅ Back").apply {
             maxWidth = buttonWidth
             setOnAction { onBack() }
         }
@@ -49,7 +49,7 @@ class DecryptFileScene(
             fitHeight = 16.0
         }
 
-        val chooseFileButton = Button("Chọn file", fileIcon).apply {
+        val chooseFileButton = Button("Select file", fileIcon).apply {
             maxWidth = buttonWidth
             setOnAction {
                 val fileChooser = FileChooser()
@@ -62,7 +62,7 @@ class DecryptFileScene(
                 val selectedFile = fileChooser.showOpenDialog(stage)
                 selectedFile?.let {
                     fileLabel.text = it.name
-                    this@DecryptFileScene.selectedFile = it  // Lưu file được chọn
+                    this@DecryptFileScene.selectedFile = it
                 }
             }
         }
@@ -71,7 +71,7 @@ class DecryptFileScene(
             alignment = Pos.CENTER
         }
 
-        val decryptButton = Button("🔓 Giải mã").apply {
+        val decryptButton = Button("🔓 Decrypt").apply {
             maxWidth = buttonWidth
             setOnAction {
                 decryptFile()
@@ -91,7 +91,7 @@ class DecryptFileScene(
         val keySize = keySizeComboBox.value.toIntOrNull()
 
         if (file == null || key.isEmpty() || keySize == null) {
-            showAlert("Vui lòng chọn file và nhập key!")
+            showAlert("Please select a file and enter a key!")
             return
         }
 
@@ -106,7 +106,7 @@ class DecryptFileScene(
             192 -> Aes.KeyLength.AES_192
             256 -> Aes.KeyLength.AES_256
             else -> {
-                showAlert("Độ dài key không hợp lệ!")
+                showAlert("Invalid key length!")
                 return
             }
         }
@@ -116,19 +116,19 @@ class DecryptFileScene(
 
         // Kiểm tra lỗi từ Aes
         if (aes.getError() == "No error") {
-            showAlert("✅ File đã được giải mã thành công!\nLưu tại: ${decryptedFile.absolutePath}")
+            showAlert("✅ File has been decrypted successfully!\nSaved at: ${decryptedFile.absolutePath}")
             // Mở file ngay sau khi giải mã thành công
             try {
                 if (Desktop.isDesktopSupported()) {
                     Desktop.getDesktop().open(decryptedFile)
                 } else {
-                    showAlert("Hệ thống của bạn không hỗ trợ mở file tự động.")
+                    showAlert("Your system does not support automatic file opening..")
                 }
             } catch (e: Exception) {
-                showAlert("Không thể mở file: ${e.message}")
+                showAlert("Cannot open file: ${e.message}")
             }
         } else {
-            showAlert("❌ Giải mã thất bại! Lỗi: ${aes.getError()}")
+            showAlert("❌ Decryption failed! Error: ${aes.getError()}")
             decryptedFile.delete() // Xóa file rác nếu giải mã thất bại
         }
     }

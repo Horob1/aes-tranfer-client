@@ -46,7 +46,7 @@ class ClientApp : Application() {
         val userLabel = Label("Username:")
         val userField = TextField().apply { prefWidth = 200.0 }
 
-        val loginButton = Button("Đăng nhập").apply {
+        val loginButton = Button("Login").apply {
             minWidth = 260.0
             setOnAction {
                 val ip = ipField.text.trim()
@@ -55,18 +55,18 @@ class ClientApp : Application() {
 
                 // Kiểm tra nếu IP hoặc PORT bị bỏ trống
                 if (ip.isEmpty() || portText.isEmpty()) {
-                    showAlert("Vui lòng nhập đầy đủ IP và PORT!")
+                    showAlert("Please enter the full IP and PORT!")
                     return@setOnAction
                 }
                 // Chuyển PORT từ String sang Int, nếu lỗi thì báo người dùng
                 val port = portText.toIntOrNull()
                 if (port == null || port <= 0 || port > 65535) {
-                    showAlert("PORT không hợp lệ! Vui lòng nhập số từ 1 đến 65535.")
+                    showAlert("Invalid PORT!")
                     return@setOnAction
                 }
                 // Kiểm tra username
                 if (username.isEmpty()) {
-                    showAlert("Vui lòng nhập Username!")
+                    showAlert("Please enter a Username!")
                     return@setOnAction
                 }
 
@@ -88,7 +88,7 @@ class ClientApp : Application() {
     }
 
     private fun createMainScene(stage: Stage): Scene {
-        val fileButton = Button("File của tôi").apply {
+        val fileButton = Button("My Files").apply {
             maxWidth = Double.MAX_VALUE
             setOnAction {
                 currentUsername?.let { username ->
@@ -100,12 +100,12 @@ class ClientApp : Application() {
                     try {
                         Desktop.getDesktop().open(userDecryptDir)
                     } catch (e: IOException) {
-                        showAlert("Không thể mở thư mục!")
+                        showAlert("Cannot open the folder!")
                     }
-                } ?: showAlert("Chưa đăng nhập!")
+                } ?: showAlert("Not logged in!")
             }
         }
-        val sendButton = Button("Gửi file").apply {
+        val sendButton = Button("Send File").apply {
             maxWidth = Double.MAX_VALUE
             setOnAction {
                 stage.scene = SendFileScene(
@@ -117,18 +117,18 @@ class ClientApp : Application() {
             }
         }
 
-        val decryptButton = Button("Giải mã").apply {
+        val decryptButton = Button("Decrypt File").apply {
             maxWidth = Double.MAX_VALUE
             setOnAction {
                 currentUsername?.let { username ->
                     stage.scene = DecryptFileScene(stage, username) {
                         stage.scene = createMainScene(stage)
                     }.createScene()
-                } ?: showAlert("Chưa đăng nhập!")
+                } ?: showAlert("Not logged in!")
             }
         }
 
-        val logoutButton = Button("Đăng xuất").apply {
+        val logoutButton = Button("Logout").apply {
             maxWidth = Double.MAX_VALUE
             setOnAction {
                 disconnectFromServer()
@@ -177,7 +177,7 @@ class ClientApp : Application() {
                 }
                 listenToServer()
             } else {
-                showAlert("Không thể kết nối tới server!")
+                showAlert("Cannot connect to the server!")
             }
         }
 
@@ -194,20 +194,19 @@ class ClientApp : Application() {
 
                     if (serverMessage.startsWith("FILE:")) {
                         val fileName = serverMessage.substring(5) // Lấy tên file
-                        val fileSize = reader?.readLine()?.toLongOrNull() ?: break // Nhận kích thước file
+                        val fileSize = reader?.readLine()?.toLongOrNull() ?: break
 
                         Platform.runLater {
-                            appendLog("📥 Đang nhận file: $fileName (${fileSize} bytes)")
-                            showAlert("📂 Có file \"$fileName\" gửi tới bạn!")
+                            showAlert("📂 A file named \"$fileName\" has been sent to you")
                         }
 
                         fileReceiver.receiveFile(fileName, fileSize)
 
-                        Platform.runLater { appendLog("✅ File $fileName đã nhận xong.") }
+                        Platform.runLater { appendLog("✅ File $fileName received.") }
                     }
                 }
             } catch (e: IOException) {
-                Platform.runLater { appendLog("❌ Mất kết nối với server!") }
+                Platform.runLater { appendLog("Lost connection to the server!") }
             } finally {
                 disconnectFromServer()
             }

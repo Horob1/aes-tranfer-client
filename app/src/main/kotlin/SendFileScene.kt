@@ -25,17 +25,17 @@ class SendFileScene(
 
     private var selectedFile: File? = null
 
-    private val fileLabel = TextField("Chưa chọn file").apply {
+    private val fileLabel = TextField("No file selected.").apply {
         isEditable = false
         maxWidth = fieldWidth
     }
     private val keyField = TextField().apply {
-        promptText = "Nhập key"
+        promptText = "Enter key"
         maxWidth = fieldWidth
     }
 
     private val recipientComboBox = ComboBox<String>().apply {
-        promptText = "Chọn người nhận"
+        promptText = "Select recipient"
         maxWidth = fieldWidth
     }
     private fun requestClientList() {
@@ -49,14 +49,11 @@ class SendFileScene(
                     writer.flush()
 
                     val response = reader.readLine()
-                    println("📩 Phản hồi từ server: '$response'")
-
                     val clients = response?.split(",")?.filter { it.isNotBlank() } ?: listOf()
-                    println("✅ Danh sách client online: $clients")
                     val filteredClients = clients.filter { it != username }
                     Platform.runLater {
                         if (clients.isEmpty()) {
-                            showAlert("Không có client nào online!")
+                            showAlert("No clients online!")
                             return@runLater
                         }
                         recipientComboBox.items.setAll(filteredClients)
@@ -66,7 +63,7 @@ class SendFileScene(
 
             } catch (e: Exception) {
                 Platform.runLater {
-                    showAlert("❌ Lỗi khi lấy danh sách client: ${e.message}")
+                    showAlert("Error retrieving client list: ${e.message}")
                 }
             }
         }.start()
@@ -84,7 +81,7 @@ class SendFileScene(
 
     fun createScene(): Scene {
         requestClientList()
-        val backButton = Button("⬅ Quay lại").apply {
+        val backButton = Button("⬅ Back").apply {
             maxWidth = buttonWidth
             setOnAction { onBack() }
         }
@@ -94,7 +91,7 @@ class SendFileScene(
             fitHeight = 16.0
         }
 
-        val chooseFileButton = Button("Chọn file", fileIcon).apply {
+        val chooseFileButton = Button("Select File", fileIcon).apply {
             maxWidth = buttonWidth
             setOnAction {
                 val fileChooser = FileChooser()
@@ -114,11 +111,11 @@ class SendFileScene(
             alignment = Pos.CENTER
         }
 
-        val sendButton = Button("📤 Gửi").apply {
+        val sendButton = Button("📤 Send").apply {
             maxWidth = buttonWidth
             setOnAction {
                 if (selectedFile == null) {
-                    showAlert("Vui lòng chọn file!")
+                    showAlert("Please select a file!")
                     return@setOnAction
                 }
 
@@ -126,22 +123,23 @@ class SendFileScene(
                 val keySize = keySizeComboBox.value.toInt()
                 val receiver = recipientComboBox.value?.trim()
 
-                if (receiver != null) {
-                    if (key.isEmpty() || receiver.isEmpty()) {
-                        showAlert("Vui lòng nhập đủ thông tin!")
-                        return@setOnAction
-                    }
+                if (receiver.isNullOrBlank()) {
+                    showAlert("Please select a recipient!")
+                    return@setOnAction
+                }
+
+                if (key.isBlank()) {
+                    showAlert("Please enter the encryption key!")
+                    return@setOnAction
                 }
 
                 val encryptedFile = encryptFile(selectedFile!!, key, keySize)
                 if (encryptedFile != null) {
-                    if (receiver != null) {
-                        sendFileToServer(encryptedFile, receiver)
-                    }
-                    showAlert("📂 File '${selectedFile!!.name}' đã được gửi thành công!")
+                    sendFileToServer(encryptedFile, receiver)
+                    showAlert("📂 File '${selectedFile!!.name}' sent successfully!")
                     onBack()
                 } else {
-                    showAlert("Lỗi khi mã hóa file!")
+                    showAlert("Error encrypting file!")
                 }
             }
         }
@@ -162,7 +160,7 @@ class SendFileScene(
                 128 -> Aes.KeyLength.AES_128
                 192 -> Aes.KeyLength.AES_192
                 256 -> Aes.KeyLength.AES_256
-                else -> throw IllegalArgumentException("❌ Key size không hợp lệ")
+                else -> throw IllegalArgumentException("Invalid key size!")
             }
 
             val encryptedFile = File(encryptDir, file.name)
@@ -172,14 +170,14 @@ class SendFileScene(
 
             val error = aes.getError()
             return if (error == "No error") {
-                println("✅ Mã hóa thành công! File được lưu tại: ${encryptedFile.absolutePath}")
+                println("✅ Encryption successful! File saved at: ${encryptedFile.absolutePath}")
                 encryptedFile
             } else {
-                println("❌ Mã hóa thất bại: $error")
+                println("❌ Encryption failed: $error")
                 null
             }
         } catch (e: Exception) {
-            println("❌ Lỗi trong quá trình mã hóa: ${e.message}")
+            println("❌ Error during encryption: ${e.message}")
             e.printStackTrace()
             return null
         }
@@ -209,13 +207,13 @@ class SendFileScene(
                     BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.UTF_8)).use { reader ->
                         val serverResponse = reader.readLine()
                         Platform.runLater {
-                            showAlert("📤 File '${file.name}' đã gửi thành công! Server Response: $serverResponse")
+                            showAlert("📤 File '${file.name}' sent successfully! Server Response: $serverResponse")
                         }
                     }
                 }
             } catch (e: Exception) {
                 Platform.runLater {
-                    showAlert("❌ Lỗi khi gửi file: ${e.message}")
+                    showAlert("❌ Error sending file: ${e.message}")
                 }
             }
         }.start()
