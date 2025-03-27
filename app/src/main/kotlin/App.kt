@@ -1,3 +1,4 @@
+import javafx.animation.*
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.concurrent.Task
@@ -5,12 +6,16 @@ import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.*
+import javafx.scene.effect.BlurType
+import javafx.scene.effect.DropShadow
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.*
 import javafx.scene.media.Media
 import javafx.scene.media.MediaPlayer
+import javafx.scene.paint.Color
 import javafx.stage.Stage
+import javafx.util.Duration
 import java.awt.Desktop
 import java.io.*
 import java.net.Socket
@@ -45,21 +50,54 @@ class ClientApp : Application() {
     }
 
     private fun createLoginScene(stage: Stage): Scene {
-        val animatedBackground = AnimatedBackground(350.0, 250.0)
+        val animatedBackground = AnimatedBackground(350.0, 400.0)
         val gridPane = GridPane().apply {
             hgap = 10.0
             vgap = 10.0
             padding = Insets(20.0)
             alignment = Pos.CENTER
         }
+        val logoImage = ImageView(Image(javaClass.getResourceAsStream("/logo.png"))).apply {
+            fitWidth = 140.0
+            fitHeight = 140.0
+            isPreserveRatio = true
+            isSmooth = true
+            style = "-fx-background-color: rgba(255, 255, 255, 0.1); " +
+                    "-fx-border-color: white; " +
+                    "-fx-border-width: 2px; " +
+                    "-fx-border-radius: 20px; " +
+                    "-fx-background-radius: 20px; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0.5, 0, 4);"
 
-        val ipLabel = Label("IP:")
-        val ipField = TextField("127.0.0.1").apply { prefWidth = 200.0 }
+            // Animation khi di chuột vào
+            setOnMouseEntered {
+                animateHover(this, 1.1, 20.0).play()
+            }
+            setOnMouseExited {
+                animateHover(this, 1.0, 10.0).play()
+            }
+        }
 
-        val portLabel = Label("PORT:")
-        val portField = TextField("5000").apply { prefWidth = 200.0 }
+        val logoContainer = StackPane(logoImage).apply {
+            alignment = Pos.CENTER
+            padding = Insets(30.0, 0.0, 20.0, 0.0)
+        }
+        val ipLabel = Label("IP ⚡:").apply {
+            style = "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"
+        }
+        val ipField = TextField("127.0.0.1").apply {
+            prefWidth = 200.0
+        }
 
-        val userLabel = Label("Username:")
+        val portLabel = Label("PORT:").apply {
+            style = "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"
+        }
+        val portField = TextField("5000").apply {
+            prefWidth = 200.0
+        }
+        val userLabel = Label("Name:").apply {
+            style = "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"
+        }
         val userField = TextField().apply { prefWidth = 200.0 }
 
         val loginButton = Button("Login").apply {
@@ -68,19 +106,15 @@ class ClientApp : Application() {
                 val ip = ipField.text.trim()
                 val portText = portField.text.trim()
                 val username = userField.text.trim()
-
-                // Kiểm tra nếu IP hoặc PORT bị bỏ trống
                 if (ip.isEmpty() || portText.isEmpty()) {
                     showAlert("Please enter the full IP and PORT!")
                     return@setOnAction
                 }
-                // Chuyển PORT từ String sang Int, nếu lỗi thì báo người dùng
                 val port = portText.toIntOrNull()
                 if (port == null || port <= 0 || port > 65535) {
                     showAlert("Invalid PORT!")
                     return@setOnAction
                 }
-                // Kiểm tra username
                 if (username.isEmpty()) {
                     showAlert("Please enter a Username!")
                     return@setOnAction
@@ -90,35 +124,52 @@ class ClientApp : Application() {
                 connectToServer(ip, port, username, stage)
             }
         }
-
-
+        val buttonContainer = HBox(loginButton).apply {
+            alignment = Pos.CENTER
+            padding = Insets(10.0, 0.0, 20.0, 0.0)
+        }
         gridPane.add(ipLabel, 0, 0)
         gridPane.add(ipField, 1, 0)
         gridPane.add(portLabel, 0, 1)
         gridPane.add(portField, 1, 1)
         gridPane.add(userLabel, 0, 2)
         gridPane.add(userField, 1, 2)
-        gridPane.add(loginButton, 0, 3, 2, 1)
-        val layout = StackPane(animatedBackground, gridPane)
-        val scene = Scene(layout, 350.0, 250.0).apply {
+        gridPane.add(buttonContainer, 0, 3, 2, 1)
+        val layout = StackPane(animatedBackground, VBox(logoContainer, gridPane).apply {
+            alignment = Pos.CENTER
+        })
+        val scene = Scene(layout, 350.0, 400.0).apply {
             stylesheets.add(javaClass.getResource("/styles.css")?.toExternalForm())
         }
         return scene
     }
+    private fun animateHover(node: ImageView, scaleFactor: Double, shadowSize: Double): ParallelTransition {
+        val scaleTransition = ScaleTransition(Duration.millis(250.0), node).apply {
+            toX = scaleFactor
+            toY = scaleFactor
+            interpolator = Interpolator.EASE_OUT
+        }
+
+        // Hiệu ứng sáng bóng hơn
+        val baseHue = 220.0 // Màu xanh dương chủ đạo
+        val glowColor = Color.hsb(baseHue, 0.6, 1.0) // Giữ màu sáng bóng
+
+        val glowEffect = DropShadow(BlurType.GAUSSIAN, glowColor, shadowSize, 0.2, 0.0, 4.0)
+        val glowAnimation = Timeline(
+            KeyFrame(Duration.millis(250.0), KeyValue(node.effectProperty(), glowEffect, Interpolator.EASE_OUT))
+        )
+
+        return ParallelTransition(scaleTransition, glowAnimation)
+    }
 
     private fun createMainScene(stage: Stage): Scene {
-//        val stopIcon = ImageView(Image(javaClass.getResourceAsStream("/stop.png"))).apply {
-//            fitWidth = 20.0
-//            fitHeight = 20.0
-//        }
-//
-//        val stopButton = Button("Stop Server", stopIcon).apply {
-//            styleClass.add("stop-button")
-//            minWidth = 232.0
-//            setOnAction { stopServer() }
-//        }
-        val fileButton = Button("My Files").apply {
+        val fileIcon = ImageView(Image(javaClass.getResourceAsStream("/myfile.png"))).apply {
+             fitWidth = 24.0
+             fitHeight = 24.0
+         }
+        val fileButton = Button("My Files",fileIcon).apply {
             maxWidth = Double.MAX_VALUE
+            styleClass.add("myfile-button")
             setOnAction {
                 currentUsername?.let { username ->
                     val userDecryptDir = File("./users/$username/Decrypt")
@@ -134,8 +185,13 @@ class ClientApp : Application() {
                 } ?: showAlert("Not logged in!")
             }
         }
-        val sendButton = Button("Send File").apply {
+        val sendIcon = ImageView(Image(javaClass.getResourceAsStream("/send.png"))).apply {
+            fitWidth = 24.0
+            fitHeight = 24.0
+        }
+        val sendButton = Button("Send File",sendIcon).apply {
             maxWidth = Double.MAX_VALUE
+            styleClass.add("sendfile-button")
             setOnAction {
                 stage.scene = SendFileScene(
                     stage,
@@ -145,9 +201,13 @@ class ClientApp : Application() {
                 ) { stage.scene = createMainScene(stage) }.createScene()
             }
         }
-
-        val decryptButton = Button("Decrypt File").apply {
+        val decryptIcon = ImageView(Image(javaClass.getResourceAsStream("/decryption.png"))).apply {
+            fitWidth = 24.0
+            fitHeight = 24.0
+        }
+        val decryptButton = Button("Decrypt File",decryptIcon).apply {
             maxWidth = Double.MAX_VALUE
+            styleClass.add("decryptfile-button")
             setOnAction {
                 currentUsername?.let { username ->
                     stage.scene = DecryptFileScene(stage, username) {
@@ -156,9 +216,13 @@ class ClientApp : Application() {
                 } ?: showAlert("Not logged in!")
             }
         }
-
-        val logoutButton = Button("Logout").apply {
+        val logoutIcon = ImageView(Image(javaClass.getResourceAsStream("/logout.png"))).apply {
+            fitWidth = 24.0
+            fitHeight = 24.0
+        }
+        val logoutButton = Button("Logout",logoutIcon).apply {
             maxWidth = Double.MAX_VALUE
+            styleClass.add("logout-button")
             setOnAction {
                 disconnectFromServer()
                 stage.scene = createLoginScene(stage)
