@@ -1,4 +1,4 @@
-import Aes
+
 import javafx.application.Platform
 import javafx.geometry.Insets
 import javafx.geometry.Pos
@@ -7,6 +7,8 @@ import javafx.scene.control.*
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.HBox
+import javafx.scene.layout.Priority
+import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
 import javafx.stage.Stage
@@ -70,9 +72,6 @@ class SendFileScene(
     }
 
 
-    private val refreshButton = Button("🔄").apply {
-        setOnAction { requestClientList() }
-    }
     private val keySizeComboBox = ComboBox<String>().apply {
         items.addAll("128", "192", "256")
         value = "128"
@@ -81,18 +80,34 @@ class SendFileScene(
 
     fun createScene(): Scene {
         requestClientList()
-        val backButton = Button("⬅ Back").apply {
-            maxWidth = buttonWidth
+
+        val backIcon = ImageView(Image(javaClass.getResourceAsStream("/left-arrow.png"))).apply {
+            fitWidth = 20.0
+            fitHeight = 20.0
+        }
+
+        val backButton = Button("Back", backIcon).apply {
+            maxWidth = 100.0
             setOnAction { onBack() }
         }
 
-        val fileIcon = ImageView(Image(javaClass.getResourceAsStream("/icons/data-encryption.png"))).apply {
-            fitWidth = 16.0
-            fitHeight = 16.0
+        val backButtonContainer = HBox(backButton).apply {
+            alignment = Pos.TOP_LEFT
+            padding = Insets(10.0, 0.0, 20.0, 0.0)
         }
 
-        val chooseFileButton = Button("Select File", fileIcon).apply {
-            maxWidth = buttonWidth
+        fileLabel.maxWidth = Double.MAX_VALUE
+        keyField.maxWidth = Double.MAX_VALUE
+        keyField.prefHeight = 35.0  // Đặt chiều cao chuẩn cho input
+
+        val fileIcon = ImageView(Image(javaClass.getResourceAsStream("/icons/data-encryption.png"))).apply {
+            fitWidth = 20.0
+            fitHeight = 20.0
+        }
+
+        val chooseFileButton = Button("Select file", fileIcon).apply {
+            maxWidth = Double.MAX_VALUE
+            prefHeight = 35.0  // Đặt chiều cao bằng input
             setOnAction {
                 val fileChooser = FileChooser()
                 val file = fileChooser.showOpenDialog(stage)
@@ -103,16 +118,38 @@ class SendFileScene(
             }
         }
 
+        keySizeComboBox.maxWidth = Double.MAX_VALUE
+        keySizeComboBox.prefHeight = 35.0 // Đặt chiều cao bằng input
+
         val fileSelectionRow = HBox(10.0, keySizeComboBox, chooseFileButton).apply {
             alignment = Pos.CENTER
+            HBox.setHgrow(keySizeComboBox, Priority.ALWAYS)
+            HBox.setHgrow(chooseFileButton, Priority.ALWAYS)
         }
+
+        val refreshIcon = ImageView(Image(javaClass.getResourceAsStream("/reload.png"))).apply {
+            fitWidth = 16.0
+            fitHeight = 16.0
+        }
+
+        val refreshButton = Button("", refreshIcon).apply {
+            minWidth = 35.0
+            minHeight = 35.0  // Đặt chiều cao bằng input
+            tooltip = Tooltip("Refresh recipient list")
+            setOnAction { requestClientList() }
+        }
+
+        recipientComboBox.maxWidth = Double.MAX_VALUE
+        recipientComboBox.prefHeight = 35.0 // Đặt chiều cao bằng input
 
         val recipientRow = HBox(10.0, refreshButton, recipientComboBox).apply {
             alignment = Pos.CENTER
+            HBox.setHgrow(recipientComboBox, Priority.ALWAYS)
         }
 
         val sendButton = Button("📤 Send").apply {
-            maxWidth = buttonWidth
+            maxWidth = Double.MAX_VALUE
+            prefHeight = 35.0  // Đặt chiều cao bằng input
             setOnAction {
                 if (selectedFile == null) {
                     showAlert("Please select a file!")
@@ -144,13 +181,20 @@ class SendFileScene(
             }
         }
 
-        val layout = VBox(12.0, backButton, fileLabel, keyField, fileSelectionRow, recipientRow, sendButton).apply {
+        val layout = VBox(12.0, backButtonContainer, fileLabel, keyField, fileSelectionRow, recipientRow, sendButton).apply {
             alignment = Pos.CENTER
             padding = Insets(20.0)
         }
+        val animatedBackground = AnimatedBackground(400.0, 400.0)
+        val root = StackPane(animatedBackground, layout)
+        root.alignment = Pos.CENTER
+        val scene = Scene(root, 400.0, 400.0)
+        scene.stylesheets.add(javaClass.getResource("/destyles.css")?.toExternalForm())
 
-        return Scene(layout, 400.0, 350.0)
+        return scene
     }
+
+
     private fun encryptFile(file: File, key: String, keySize: Int): File? {
         try {
             val encryptDir = File("users/$username/Encrypt")

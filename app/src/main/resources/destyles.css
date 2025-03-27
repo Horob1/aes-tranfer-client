@@ -1,0 +1,106 @@
+.root {
+    -fx-background-color: linear-gradient(to bottom right, #121212, #333333);
+    -fx-font-family: "JetBrains Mono";
+    -fx-text-fill: white;
+}
+
+/* Button Styles */
+.button {
+    -fx-background-color: #444;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 8px 16px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-transition: background-color 0.3s ease-in-out;
+}
+
+
+.button:hover {
+    -fx-background-color: #666;
+}
+
+.button:pressed {
+    -fx-background-color: #888;
+}
+
+/* Back Button */
+.back-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+}
+
+.back-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}
+
+
+/* TextField Styles */
+.text-field {
+    -fx-background-color: #222;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 8px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-border-color: #555;
+}
+
+.text-field:focused {
+    -fx-border-color: #888;
+    -fx-background-color: #333;
+}
+
+/* ComboBox Styles */
+.combo-box {
+    -fx-background-color: #222;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 8px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-border-color: #555;
+}
+
+.combo-box:hover {
+    -fx-background-color: #333;
+}
+
+.combo-box .list-cell {
+    -fx-text-fill: white;
+    -fx-background-color: #222;
+}
+
+.combo-box .list-cell:hover {
+    -fx-background-color: #333;
+}
+
+.combo-box .list-cell:selected {
+    -fx-background-color: #444;
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: #444;
+}
+
+.combo-box .arrow-button:hover {
+    -fx-background-color: #666;
+}
+
+/* Label Styles */
+.label {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+
+/* Padding for Containers */
+.vbox {
+    -fx-spacing: 12px;
+}
+
+.hbox {
+    -fx-spacing: 10px;
+}

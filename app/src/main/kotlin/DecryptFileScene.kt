@@ -6,6 +6,8 @@ import javafx.scene.control.*
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.HBox
+import javafx.scene.layout.Priority
+import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
 import javafx.stage.Stage
@@ -39,22 +41,31 @@ class DecryptFileScene(
     }
 
     fun createScene(): Scene {
-        val backButton = Button("⬅ Back").apply {
-            maxWidth = buttonWidth
+        val backIcon = ImageView(Image(javaClass.getResourceAsStream("/left-arrow.png"))).apply {
+            fitWidth = 20.0
+            fitHeight = 20.0
+            styleClass.add("back-icon")
+        }
+
+        val backButton = Button("Back", backIcon).apply {
+            maxWidth = 100.0 // Giữ nút nhỏ gọn
             setOnAction { onBack() }
         }
 
+        val backButtonContainer = HBox(backButton).apply {
+            alignment = Pos.TOP_LEFT
+            padding = Insets(10.0, 0.0, 20.0, 0.0)
+        }
+
         val fileIcon = ImageView(Image(javaClass.getResourceAsStream("/icons/data-encryption.png"))).apply {
-            fitWidth = 16.0
-            fitHeight = 16.0
+            fitWidth = 20.0
+            fitHeight = 20.0
         }
 
         val chooseFileButton = Button("Select file", fileIcon).apply {
-            maxWidth = buttonWidth
+            maxWidth = Double.MAX_VALUE
             setOnAction {
                 val fileChooser = FileChooser()
-
-                // Đặt thư mục mặc định vào user/username/Received
                 val receivedDir = File("users/$username/Received")
                 if (!receivedDir.exists()) receivedDir.mkdirs()
                 fileChooser.initialDirectory = receivedDir
@@ -67,24 +78,58 @@ class DecryptFileScene(
             }
         }
 
-        val fileSelectionRow = HBox(10.0, keySizeComboBox, chooseFileButton).apply {
+        keySizeComboBox.maxWidth = Double.MAX_VALUE
+
+        // Căn chỉnh 2 ô input full dòng
+        fileLabel.maxWidth = Double.MAX_VALUE
+        keyField.maxWidth = Double.MAX_VALUE
+
+        // Tạo các dòng riêng biệt
+        val fileLabelRow = VBox(fileLabel).apply {
             alignment = Pos.CENTER
+            VBox.setVgrow(this, Priority.ALWAYS)
         }
 
-        val decryptButton = Button("🔓 Decrypt").apply {
-            maxWidth = buttonWidth
-            setOnAction {
-                decryptFile()
-            }
+        val keyFieldRow = VBox(keyField).apply {
+            alignment = Pos.CENTER
+            VBox.setVgrow(this, Priority.ALWAYS)
         }
 
-        val layout = VBox(12.0, backButton, fileLabel, keyField, fileSelectionRow, decryptButton).apply {
+        val keySizeRow = VBox(keySizeComboBox).apply {
+            alignment = Pos.CENTER
+            VBox.setVgrow(this, Priority.ALWAYS)
+        }
+
+        val fileSelectRow = VBox(chooseFileButton).apply {
+            alignment = Pos.CENTER
+            VBox.setVgrow(this, Priority.ALWAYS)
+        }
+
+        val decryptIcon = ImageView(Image(javaClass.getResourceAsStream("/unlocked.png"))).apply {
+            fitWidth = 20.0
+            fitHeight = 20.0
+        }
+
+        val decryptButton = Button("Decrypt", decryptIcon).apply {
+            maxWidth = Double.MAX_VALUE
+            setOnAction { decryptFile() }
+        }
+
+        val layout = VBox(12.0, backButtonContainer, fileLabelRow, keyFieldRow, keySizeRow, fileSelectRow, decryptButton).apply {
             alignment = Pos.CENTER
             padding = Insets(20.0)
         }
 
-        return Scene(layout, 400.0, 300.0)
+        val animatedBackground = AnimatedBackground(300.0, 400.0)
+        val root = StackPane( animatedBackground, layout)
+        root.alignment = Pos.CENTER
+        val scene = Scene(root, 300.0, 400.0)
+        scene.stylesheets.add(javaClass.getResource("/destyles.css")?.toExternalForm())
+
+        return scene
     }
+
+
     private fun decryptFile() {
         val file = selectedFile
         val key = keyField.text.trim()
