@@ -1,0 +1,50 @@
+.root {
+    -fx-background-color: linear-gradient(to bottom right, #121212, #333333);
+    -fx-font-family: "JetBrains Mono";
+    -fx-text-fill: white;
+}
+
+.log-label {
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* Tạo hiệu ứng nền blur cho Log Area */
+.log-area {
+    -fx-background-color: rgba(255, 255, 255, 0.1); /* Nền trong suốt */
+    -fx-background-radius: 10px;
+    -fx-border-color: rgba(255, 255, 255, 0.3); /* Viền trắng nhạt */
+    -fx-border-radius: 10px;
+    -fx-padding: 10px;
+    -fx-text-fill: black; /* Màu chữ trắng để dễ đọc */
+}
+
+.button {
+    -fx-padding: 8px 16px;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-border-width: 2px;
+    -fx-cursor: hand;
+}
+
+.stop-button {
+    -fx-background-color: #d9534f; /* Màu đỏ */
+    -fx-text-fill: white;
+}
+
+.clear-button {
+    -fx-background-color: #5bc0de; /* Màu xanh */
+    -fx-text-fill: white;
+}
+
+.stop-button:hover {
+    -fx-background-color: #c0392b;
+}
+
+.clear-button:hover {
+    -fx-background-color: #2980b9;
+}

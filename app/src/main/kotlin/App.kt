@@ -6,7 +6,10 @@ import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.*
 import javafx.scene.image.Image
+import javafx.scene.image.ImageView
 import javafx.scene.layout.*
+import javafx.scene.media.Media
+import javafx.scene.media.MediaPlayer
 import javafx.stage.Stage
 import java.awt.Desktop
 import java.io.*
@@ -20,6 +23,17 @@ class ClientApp : Application() {
     private val logArea = TextArea()
     private var currentUsername: String? = null
 
+    private fun playMusic(filePath: String) {
+        val musicFile = javaClass.getResource(filePath)?.toExternalForm()
+        if (musicFile != null) {
+            val media = Media(musicFile)
+            val mediaPlayer = MediaPlayer(media)
+            mediaPlayer.play()
+        } else {
+            println("Cannot find music file!")
+        }
+    }
+
     override fun start(primaryStage: Stage) {
         primaryStage.title = "AES Transfer Client"
         primaryStage.scene = createLoginScene(primaryStage)
@@ -27,9 +41,11 @@ class ClientApp : Application() {
         primaryStage.isMaximized = false
         primaryStage.icons.add(Image(javaClass.getResourceAsStream("/icons/logo.png")))
         primaryStage.show()
+        playMusic("/noti.mp3")
     }
 
     private fun createLoginScene(stage: Stage): Scene {
+        val animatedBackground = AnimatedBackground(350.0, 250.0)
         val gridPane = GridPane().apply {
             hgap = 10.0
             vgap = 10.0
@@ -83,11 +99,24 @@ class ClientApp : Application() {
         gridPane.add(userLabel, 0, 2)
         gridPane.add(userField, 1, 2)
         gridPane.add(loginButton, 0, 3, 2, 1)
-
-        return Scene(gridPane, 350.0, 250.0)
+        val layout = StackPane(animatedBackground, gridPane)
+        val scene = Scene(layout, 350.0, 250.0).apply {
+            stylesheets.add(javaClass.getResource("/styles.css")?.toExternalForm())
+        }
+        return scene
     }
 
     private fun createMainScene(stage: Stage): Scene {
+//        val stopIcon = ImageView(Image(javaClass.getResourceAsStream("/stop.png"))).apply {
+//            fitWidth = 20.0
+//            fitHeight = 20.0
+//        }
+//
+//        val stopButton = Button("Stop Server", stopIcon).apply {
+//            styleClass.add("stop-button")
+//            minWidth = 232.0
+//            setOnAction { stopServer() }
+//        }
         val fileButton = Button("My Files").apply {
             maxWidth = Double.MAX_VALUE
             setOnAction {
@@ -143,12 +172,17 @@ class ClientApp : Application() {
             prefWidth = 300.0       // Định nghĩa chiều rộng cố định cho layout
         }
 
+        val animatedBackground = AnimatedBackground(400.0, 300.0)
+
         val root = StackPane(buttonBox).apply {
             alignment = Pos.CENTER
             padding = Insets(50.0)
         }
-
-        return Scene(root, 400.0, 300.0)
+        val layout = StackPane(animatedBackground, root)
+        val scene = Scene(layout, 400.0, 300.0).apply {
+            stylesheets.add(javaClass.getResource("/styles2.css")?.toExternalForm())
+        }
+        return scene
     }
     private fun connectToServer(ip: String, port: Int, username: String, stage: Stage) {
         val task = object : Task<Boolean>() {
