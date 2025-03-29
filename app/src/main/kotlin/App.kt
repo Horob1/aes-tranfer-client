@@ -23,8 +23,9 @@ import kotlin.concurrent.thread
 
 class ClientApp : Application() {
     private var socket: Socket? = null
-    private var writer: PrintWriter? = null
-    private var reader: BufferedReader? = null
+    private lateinit var dataOutput: DataOutputStream
+    private lateinit var dataInput: DataInputStream
+
     private val logArea = TextArea()
     private var currentUsername: String? = null
 
@@ -253,11 +254,11 @@ class ClientApp : Application() {
             override fun call(): Boolean {
                 return try {
                     socket = Socket(ip, port)
-                    writer = PrintWriter(OutputStreamWriter(socket!!.getOutputStream(), Charsets.UTF_8), true)
-                    reader = BufferedReader(InputStreamReader(socket!!.getInputStream(), Charsets.UTF_8))
+                    dataOutput = DataOutputStream(socket!!.getOutputStream())
+                    dataInput = DataInputStream(socket!!.getInputStream())
 
                     // Gửi yêu cầu đăng nhập đến server
-                    writer!!.println("LOGIN:$username")
+                    dataOutput.writeUTF("LOGIN:$username")
                     currentUsername = username
 
                     true  // Kết nối thành công
@@ -287,16 +288,14 @@ class ClientApp : Application() {
             val fileReceiver = FileReceiver(socket!!, currentUsername!!)
             try {
                 while (true) {
-                    val serverMessage = reader?.readLine() ?: break
+                    val serverMessage = dataInput.readUTF() ?: break
                     Platform.runLater { appendLog("📩 Server: $serverMessage") }
 
-                    if (serverMessage.startsWith("FILE:")) {
-                        val fileName = serverMessage.substring(5) // Lấy tên file
-                        val fileSize = reader?.readLine()?.toLongOrNull() ?: break
+                    if (serverMessage == "FILE") {
+                        val fileName = dataInput.readUTF().trim() ?: break
+                        val fileSize = dataInput.readLong() ?: break
 
-                        Platform.runLater {
-                            showAlert("📂 A file named \"$fileName\" has been sent to you")
-                        }
+                        Platform.runLater { showAlert("📂 You received a file: \"$fileName\" ($fileSize bytes)") }
 
                         fileReceiver.receiveFile(fileName, fileSize)
 
@@ -304,14 +303,12 @@ class ClientApp : Application() {
                     }
                 }
             } catch (e: IOException) {
-                Platform.runLater { appendLog("Lost connection to the server!") }
+                Platform.runLater { appendLog("❌ Lost connection to the server!") }
             } finally {
                 disconnectFromServer()
             }
         }
     }
-
-
 
     private fun disconnectFromServer() {
         try {

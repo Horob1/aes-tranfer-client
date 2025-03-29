@@ -44,32 +44,35 @@ class SendFileScene(
         Thread {
             try {
                 Socket(serverIp, serverPort).use { socket ->
-                    val writer = PrintWriter(OutputStreamWriter(socket.getOutputStream(), Charsets.UTF_8), true)
-                    val reader = BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.UTF_8))
+                    val dataOutput = DataOutputStream(socket.getOutputStream())
+                    val dataInput = DataInputStream(socket.getInputStream())
 
-                    writer.println("LIST_CLIENTS")
-                    writer.flush()
+                    // Gửi yêu cầu danh sách client
+                    dataOutput.writeUTF("LIST_CLIENTS")
+                    dataOutput.flush()
 
-                    val response = reader.readLine()
-                    val clients = response?.split(",")?.filter { it.isNotBlank() } ?: listOf()
-                    val filteredClients = clients.filter { it != username }
+                    // Nhận danh sách từ server
+                    val response = dataInput.readUTF()
+                    val clients = response.split(",").filter { it.isNotBlank() }
+                    val filteredClients = clients.filter { it != username } // Loại bỏ chính mình
+
                     Platform.runLater {
-                        if (clients.isEmpty()) {
+                        if (filteredClients.isEmpty()) {
                             showAlert("No clients online!")
-                            return@runLater
+                        } else {
+                            recipientComboBox.items.setAll(filteredClients)
+                            recipientComboBox.isDisable = false // Mở khóa ComboBox khi có client
                         }
-                        recipientComboBox.items.setAll(filteredClients)
-                        recipientComboBox.isDisable = false // Mở khóa ComboBox khi có client
                     }
                 }
-
             } catch (e: Exception) {
                 Platform.runLater {
-                    showAlert("Error retrieving client list: ${e.message}")
+                    showAlert("❌ Error retrieving client list: ${e.message}")
                 }
             }
         }.start()
     }
+
 
 
     private val keySizeComboBox = ComboBox<String>().apply {
@@ -231,28 +234,33 @@ class SendFileScene(
         Thread {
             try {
                 Socket(serverIp, serverPort).use { socket ->
-                    val outputStream = socket.getOutputStream()
-                    val writer = PrintWriter(OutputStreamWriter(outputStream, Charsets.UTF_8), true)
+                    val dataOutput = DataOutputStream(socket.getOutputStream())
+                    val dataInput = DataInputStream(socket.getInputStream())
 
-                    // Gửi tín hiệu bắt đầu
-                    writer.println("START_FILE")
+                    // Gửi tín hiệu bắt đầu + thông tin file
+                    dataOutput.writeUTF("START_FILE")
+                    dataOutput.writeUTF(receiver)
+                    dataOutput.writeUTF(file.name)
+                    dataOutput.writeLong(file.length())
+                    dataOutput.flush()
 
-                    // Gửi thông tin file trước
-                    writer.println(receiver)
-                    writer.println(file.name)
-                    writer.println(file.length())
+                    // Gửi nội dung file
+                    FileInputStream(file).use { fileInput ->
+                        val buffer = ByteArray(65536) // 64KB buffer giúp truyền nhanh hơn
+                        var bytesRead: Int
+                        var totalSent: Long = 0
 
-                    FileInputStream(file).use { fileInputStream ->
-                        fileInputStream.copyTo(outputStream)
-                        outputStream.flush() // Đảm bảo gửi hết dữ liệu
+                        while (fileInput.read(buffer).also { bytesRead = it } != -1) {
+                            dataOutput.write(buffer, 0, bytesRead)
+                            totalSent += bytesRead
+                        }
+                        dataOutput.flush()
                     }
 
-                    // Đọc phản hồi từ server
-                    BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.UTF_8)).use { reader ->
-                        val serverResponse = reader.readLine()
-                        Platform.runLater {
-                            showAlert("📤 File '${file.name}' sent successfully! Server Response: $serverResponse")
-                        }
+                    // Nhận phản hồi từ server
+                    val serverResponse = dataInput.readUTF()
+                    Platform.runLater {
+                        showAlert("✅ File '${file.name}' sent successfully!\nServer Response: $serverResponse")
                     }
                 }
             } catch (e: Exception) {
@@ -262,6 +270,7 @@ class SendFileScene(
             }
         }.start()
     }
+
 
     private fun showAlert(message: String) {
         Platform.runLater {
