@@ -112,7 +112,21 @@ class DecryptFileScene(
 
         val decryptButton = Button("Decrypt", decryptIcon).apply {
             maxWidth = Double.MAX_VALUE
-            setOnAction { decryptFile() }
+            setOnAction {
+                val key = keyField.text.trim()
+                val keySize = keySizeComboBox.value.toInt()
+                if (key.isBlank()) {
+                    showAlert("Please enter the encryption key!")
+                    return@setOnAction
+                }
+
+                if(key.length != keySize/8) {
+                    showAlert("Key must be contain ${keySize/8} characters!")
+                    return@setOnAction
+                }
+
+                decryptFile()
+            }
         }
 
         val layout = VBox(12.0, backButtonContainer, fileLabelRow, keyFieldRow, keySizeRow, fileSelectRow, decryptButton).apply {

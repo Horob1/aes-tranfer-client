@@ -173,6 +173,11 @@ class SendFileScene(
                     return@setOnAction
                 }
 
+                if(key.length != keySize/8) {
+                    showAlert("Key must be contain ${keySize/8} characters!")
+                    return@setOnAction
+                }
+
                 val encryptedFile = encryptFile(selectedFile!!, key, keySize)
                 if (encryptedFile != null) {
                     sendFileToServer(encryptedFile, receiver)
